@@ -83,35 +83,34 @@ namespace node {
   V(ZLIB)
 
 #if HAVE_OPENSSL
-#define NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)                                   \
-  V(CHECKPRIMEREQUEST)                                                        \
-  V(PBKDF2REQUEST)                                                            \
-  V(KEYPAIRGENREQUEST)                                                        \
-  V(KEYGENREQUEST)                                                            \
-  V(KEYEXPORTREQUEST)                                                         \
-  V(CIPHERREQUEST)                                                            \
-  V(DERIVEBITSREQUEST)                                                        \
-  V(HASHREQUEST)                                                              \
-  V(RANDOMBYTESREQUEST)                                                       \
-  V(RANDOMPRIMEREQUEST)                                                       \
-  V(SCRYPTREQUEST)                                                            \
-  V(SIGNREQUEST)                                                              \
-  V(TLSWRAP)                                                                  \
+#define NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)                                    \
+  V(CHECKPRIMEREQUEST)                                                         \
+  V(PBKDF2REQUEST)                                                             \
+  V(KEYPAIRGENREQUEST)                                                         \
+  V(KEYGENREQUEST)                                                             \
+  V(KEYEXPORTREQUEST)                                                          \
+  V(CIPHERREQUEST)                                                             \
+  V(DERIVEBITSREQUEST)                                                         \
+  V(HASHREQUEST)                                                               \
+  V(RANDOMBYTESREQUEST)                                                        \
+  V(RANDOMPRIMEREQUEST)                                                        \
+  V(SCRYPTREQUEST)                                                             \
+  V(SIGNREQUEST)                                                               \
+  V(TLSWRAP)                                                                   \
   V(VERIFYREQUEST)
 #else
 #define NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)
 #endif  // HAVE_OPENSSL
 
 #if HAVE_INSPECTOR
-#define NODE_ASYNC_INSPECTOR_PROVIDER_TYPES(V)                                \
-  V(INSPECTORJSBINDING)
+#define NODE_ASYNC_INSPECTOR_PROVIDER_TYPES(V) V(INSPECTORJSBINDING)
 #else
 #define NODE_ASYNC_INSPECTOR_PROVIDER_TYPES(V)
 #endif  // HAVE_INSPECTOR
 
-#define NODE_ASYNC_PROVIDER_TYPES(V)                                          \
-  NODE_ASYNC_NON_CRYPTO_PROVIDER_TYPES(V)                                     \
-  NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)                                         \
+#define NODE_ASYNC_PROVIDER_TYPES(V)                                           \
+  NODE_ASYNC_NON_CRYPTO_PROVIDER_TYPES(V)                                      \
+  NODE_ASYNC_CRYPTO_PROVIDER_TYPES(V)                                          \
   NODE_ASYNC_INSPECTOR_PROVIDER_TYPES(V)
 
 class Environment;
@@ -121,11 +120,10 @@ class ExternalReferenceRegistry;
 class AsyncWrap : public BaseObject {
  public:
   enum ProviderType {
-#define V(PROVIDER)                                                           \
-    PROVIDER_ ## PROVIDER,
+#define V(PROVIDER) PROVIDER_##PROVIDER,
     NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
-    PROVIDERS_LENGTH,
+        PROVIDERS_LENGTH,
   };
 
   AsyncWrap(Environment* env,
@@ -166,9 +164,9 @@ class AsyncWrap : public BaseObject {
   static void AsyncReset(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void GetProviderType(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void QueueDestroyAsyncId(
-    const v8::FunctionCallbackInfo<v8::Value>& args);
+      const v8::FunctionCallbackInfo<v8::Value>& args);
   static void SetCallbackTrampoline(
-    const v8::FunctionCallbackInfo<v8::Value>& args);
+      const v8::FunctionCallbackInfo<v8::Value>& args);
 
   static void EmitAsyncInit(Environment* env,
                             v8::Local<v8::Object> object,
@@ -204,22 +202,16 @@ class AsyncWrap : public BaseObject {
                                          int argc,
                                          v8::Local<v8::Value>* argv);
   inline v8::MaybeLocal<v8::Value> MakeCallback(
-      const v8::Local<v8::Symbol> symbol,
-      int argc,
-      v8::Local<v8::Value>* argv);
+      const v8::Local<v8::Symbol> symbol, int argc, v8::Local<v8::Value>* argv);
   inline v8::MaybeLocal<v8::Value> MakeCallback(
-      const v8::Local<v8::String> symbol,
-      int argc,
-      v8::Local<v8::Value>* argv);
+      const v8::Local<v8::String> symbol, int argc, v8::Local<v8::Value>* argv);
   inline v8::MaybeLocal<v8::Value> MakeCallback(
-      const v8::Local<v8::Name> symbol,
-      int argc,
-      v8::Local<v8::Value>* argv);
+      const v8::Local<v8::Name> symbol, int argc, v8::Local<v8::Value>* argv);
 
   virtual std::string diagnostic_name() const;
   const char* MemoryInfoName() const override;
 
-  static void WeakCallback(const v8::WeakCallbackInfo<DestroyParam> &info);
+  static void WeakCallback(const v8::WeakCallbackInfo<DestroyParam>& info);
 
   // Returns the object that 'owns' an async wrap. For example, for a
   // TCP connection handle, this is the corresponding net.Socket.

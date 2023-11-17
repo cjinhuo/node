@@ -134,8 +134,8 @@ inline AliasedFloat64Array& AsyncHooks::async_ids_stack() {
 
 v8::Local<v8::Array> AsyncHooks::js_execution_async_resources() {
   if (UNLIKELY(js_execution_async_resources_.IsEmpty())) {
-    js_execution_async_resources_.Reset(
-        env()->isolate(), v8::Array::New(env()->isolate()));
+    js_execution_async_resources_.Reset(env()->isolate(),
+                                        v8::Array::New(env()->isolate()));
   }
   return PersistentToLocal::Strong(js_execution_async_resources_);
 }
@@ -219,9 +219,8 @@ inline Environment* Environment::GetCurrent(v8::Local<v8::Context> context) {
   if (UNLIKELY(!ContextEmbedderTag::IsNodeContext(context))) {
     return nullptr;
   }
-  return static_cast<Environment*>(
-      context->GetAlignedPointerFromEmbedderData(
-          ContextEmbedderIndex::kEnvironment));
+  return static_cast<Environment*>(context->GetAlignedPointerFromEmbedderData(
+      ContextEmbedderIndex::kEnvironment));
 }
 
 inline Environment* Environment::GetCurrent(
@@ -279,9 +278,9 @@ inline void Environment::CloseHandle(T* handle, OnCloseCallback callback) {
     OnCloseCallback callback;
     void* original_data;
   };
-  handle->data = new CloseData { this, callback, handle->data };
+  handle->data = new CloseData{this, callback, handle->data};
   uv_close(reinterpret_cast<uv_handle_t*>(handle), [](uv_handle_t* handle) {
-    std::unique_ptr<CloseData> data { static_cast<CloseData*>(handle->data) };
+    std::unique_ptr<CloseData> data{static_cast<CloseData*>(handle->data)};
     data->env->handle_cleanup_waiting_--;
     handle->data = data->original_data;
     data->callback(reinterpret_cast<T*>(handle));
@@ -312,6 +311,7 @@ inline void Environment::set_is_in_inspector_console_call(bool value) {
 #endif
 
 inline AsyncHooks* Environment::async_hooks() {
+  // mark 获取 async_hooks 的指针
   return &async_hooks_;
 }
 
@@ -393,8 +393,7 @@ inline AliasedInt32Array& Environment::stream_base_state() {
   return stream_base_state_;
 }
 
-ShouldNotAbortOnUncaughtScope::ShouldNotAbortOnUncaughtScope(
-    Environment* env)
+ShouldNotAbortOnUncaughtScope::ShouldNotAbortOnUncaughtScope(Environment* env)
     : env_(env) {
   env_->PushShouldNotAbortOnUncaughtScope();
 }
@@ -453,7 +452,7 @@ inline double Environment::trigger_async_id() {
 
 inline double Environment::get_default_trigger_async_id() {
   double default_trigger_async_id =
-    async_hooks()->async_id_fields()[AsyncHooks::kDefaultTriggerAsyncId];
+      async_hooks()->async_id_fields()[AsyncHooks::kDefaultTriggerAsyncId];
   // If defaultTriggerAsyncId isn't set, use the executionAsyncId
   if (default_trigger_async_id < 0)
     default_trigger_async_id = execution_async_id();
@@ -567,8 +566,8 @@ inline uint64_t Environment::heap_prof_interval() const {
 
 #endif  // HAVE_INSPECTOR
 
-inline
-std::shared_ptr<ExclusiveAccess<HostPort>> Environment::inspector_host_port() {
+inline std::shared_ptr<ExclusiveAccess<HostPort>>
+Environment::inspector_host_port() {
   return inspector_host_port_;
 }
 
@@ -587,21 +586,19 @@ void Environment::SetImmediate(Fn&& cb, CallbackFlags::Flags flags) {
   native_immediates_.Push(std::move(callback));
 
   if (flags & CallbackFlags::kRefed) {
-    if (immediate_info()->ref_count() == 0)
-      ToggleImmediateRef(true);
+    if (immediate_info()->ref_count() == 0) ToggleImmediateRef(true);
     immediate_info()->ref_count_inc(1);
   }
 }
 
 template <typename Fn>
 void Environment::SetImmediateThreadsafe(Fn&& cb, CallbackFlags::Flags flags) {
-  auto callback = native_immediates_threadsafe_.CreateCallback(
-      std::move(cb), flags);
+  auto callback =
+      native_immediates_threadsafe_.CreateCallback(std::move(cb), flags);
   {
     Mutex::ScopedLock lock(native_immediates_threadsafe_mutex_);
     native_immediates_threadsafe_.Push(std::move(callback));
-    if (task_queues_async_initialized_)
-      uv_async_send(&task_queues_async_);
+    if (task_queues_async_initialized_) uv_async_send(&task_queues_async_);
   }
 }
 
@@ -612,8 +609,7 @@ void Environment::RequestInterrupt(Fn&& cb) {
   {
     Mutex::ScopedLock lock(native_immediates_threadsafe_mutex_);
     native_immediates_interrupts_.Push(std::move(callback));
-    if (task_queues_async_initialized_)
-      uv_async_send(&task_queues_async_);
+    if (task_queues_async_initialized_) uv_async_send(&task_queues_async_);
   }
   RequestInterruptFromV8();
 }
@@ -644,7 +640,7 @@ inline bool Environment::is_main_thread() const {
 
 inline bool Environment::no_native_addons() const {
   return (flags_ & EnvironmentFlags::kNoNativeAddons) ||
-          !options_->allow_native_addons;
+         !options_->allow_native_addons;
 }
 
 inline bool Environment::should_not_register_esm_loader() const {
@@ -736,13 +732,13 @@ inline std::list<node_module>* Environment::extra_linked_bindings() {
 }
 
 inline node_module* Environment::extra_linked_bindings_head() {
-  return extra_linked_bindings_.size() > 0 ?
-      &extra_linked_bindings_.front() : nullptr;
+  return extra_linked_bindings_.size() > 0 ? &extra_linked_bindings_.front()
+                                           : nullptr;
 }
 
 inline node_module* Environment::extra_linked_bindings_tail() {
-  return extra_linked_bindings_.size() > 0 ?
-      &extra_linked_bindings_.back() : nullptr;
+  return extra_linked_bindings_.size() > 0 ? &extra_linked_bindings_.back()
+                                           : nullptr;
 }
 
 inline const Mutex& Environment::extra_linked_bindings_mutex() const {
@@ -776,8 +772,7 @@ inline void Environment::ThrowRangeError(const char* errmsg) {
 }
 
 inline void Environment::ThrowError(
-    v8::Local<v8::Value> (*fun)(v8::Local<v8::String>),
-    const char* errmsg) {
+    v8::Local<v8::Value> (*fun)(v8::Local<v8::String>), const char* errmsg) {
   v8::HandleScope handle_scope(isolate());
   isolate()->ThrowException(fun(OneByteString(isolate(), errmsg)));
 }
@@ -816,15 +811,14 @@ void Environment::set_process_exit_handler(
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
 #define VS(PropertyName, StringValue) V(v8::String, PropertyName)
 #define VR(PropertyName, TypeName) V(v8::Private, per_realm_##PropertyName)
-#define V(TypeName, PropertyName)                                             \
-  inline                                                                      \
-  v8::Local<TypeName> IsolateData::PropertyName() const {                     \
-    return PropertyName ## _ .Get(isolate_);                                  \
+#define V(TypeName, PropertyName)                                              \
+  inline v8::Local<TypeName> IsolateData::PropertyName() const {               \
+    return PropertyName##_.Get(isolate_);                                      \
   }
-  PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
-  PER_ISOLATE_SYMBOL_PROPERTIES(VY)
-  PER_ISOLATE_STRING_PROPERTIES(VS)
-  PER_REALM_STRONG_PERSISTENT_VALUES(VR)
+PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
+PER_ISOLATE_SYMBOL_PROPERTIES(VY)
+PER_ISOLATE_STRING_PROPERTIES(VS)
+PER_REALM_STRONG_PERSISTENT_VALUES(VR)
 #undef V
 #undef VR
 #undef VS
@@ -839,21 +833,21 @@ void Environment::set_process_exit_handler(
   inline void IsolateData::set_##PropertyName(v8::Local<TypeName> value) {     \
     PropertyName##_.Set(isolate_, value);                                      \
   }
-  PER_ISOLATE_TEMPLATE_PROPERTIES(V)
-  NODE_BINDINGS_WITH_PER_ISOLATE_INIT(VM)
+PER_ISOLATE_TEMPLATE_PROPERTIES(V)
+NODE_BINDINGS_WITH_PER_ISOLATE_INIT(VM)
 #undef V
 #undef VM
 
 #define VP(PropertyName, StringValue) V(v8::Private, PropertyName)
 #define VY(PropertyName, StringValue) V(v8::Symbol, PropertyName)
 #define VS(PropertyName, StringValue) V(v8::String, PropertyName)
-#define V(TypeName, PropertyName)                                             \
-  inline v8::Local<TypeName> Environment::PropertyName() const {              \
-    return isolate_data()->PropertyName();                                    \
+#define V(TypeName, PropertyName)                                              \
+  inline v8::Local<TypeName> Environment::PropertyName() const {               \
+    return isolate_data()->PropertyName();                                     \
   }
-  PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
-  PER_ISOLATE_SYMBOL_PROPERTIES(VY)
-  PER_ISOLATE_STRING_PROPERTIES(VS)
+PER_ISOLATE_PRIVATE_SYMBOL_PROPERTIES(VP)
+PER_ISOLATE_SYMBOL_PROPERTIES(VY)
+PER_ISOLATE_STRING_PROPERTIES(VS)
 #undef V
 #undef VS
 #undef VY
@@ -867,7 +861,7 @@ void Environment::set_process_exit_handler(
     DCHECK(isolate_data()->PropertyName().IsEmpty());                          \
     isolate_data()->set_##PropertyName(value);                                 \
   }
-  PER_ISOLATE_TEMPLATE_PROPERTIES(V)
+PER_ISOLATE_TEMPLATE_PROPERTIES(V)
 #undef V
 
 #define V(PropertyName, TypeName)                                              \
@@ -879,7 +873,7 @@ void Environment::set_process_exit_handler(
     DCHECK_NOT_NULL(principal_realm_);                                         \
     principal_realm_->set_##PropertyName(value);                               \
   }
-  PER_REALM_STRONG_PERSISTENT_VALUES(V)
+PER_REALM_STRONG_PERSISTENT_VALUES(V)
 #undef V
 
 v8::Local<v8::Context> Environment::context() const {

@@ -58,9 +58,8 @@ using TryCatchScope = node::errors::TryCatchScope;
 namespace node {
 
 static const char* const provider_names[] = {
-#define V(PROVIDER)                                                           \
-  #PROVIDER,
-  NODE_ASYNC_PROVIDER_TYPES(V)
+#define V(PROVIDER) #PROVIDER,
+    NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
 };
 
@@ -81,18 +80,18 @@ void AsyncWrap::DestroyAsyncIdsCallback(Environment* env) {
       MaybeLocal<Value> ret = fn->Call(
           env->context(), Undefined(env->isolate()), 1, &async_id_value);
 
-      if (ret.IsEmpty())
-        return;
+      if (ret.IsEmpty()) return;
     }
   } while (!env->destroy_async_id_list()->empty());
 }
 
-void Emit(Environment* env, double async_id, AsyncHooks::Fields type,
+void Emit(Environment* env,
+          double async_id,
+          AsyncHooks::Fields type,
           Local<Function> fn) {
   AsyncHooks* async_hooks = env->async_hooks();
 
-  if (async_hooks->fields()[type] == 0 || !env->can_call_into_js())
-    return;
+  if (async_hooks->fields()[type] == 0 || !env->can_call_into_js()) return;
 
   HandleScope handle_scope(env->isolate());
   Local<Value> async_id_value = Number::New(env->isolate(), async_id);
@@ -100,21 +99,21 @@ void Emit(Environment* env, double async_id, AsyncHooks::Fields type,
   USE(fn->Call(env->context(), Undefined(env->isolate()), 1, &async_id_value));
 }
 
-
 void AsyncWrap::EmitPromiseResolve(Environment* env, double async_id) {
-  Emit(env, async_id, AsyncHooks::kPromiseResolve,
+  Emit(env,
+       async_id,
+       AsyncHooks::kPromiseResolve,
        env->async_hooks_promise_resolve_function());
 }
 
-
 void AsyncWrap::EmitTraceEventBefore() {
   switch (provider_type()) {
-#define V(PROVIDER)                                                           \
-    case PROVIDER_ ## PROVIDER:                                               \
-      TRACE_EVENT_NESTABLE_ASYNC_BEGIN0(                                      \
-        TRACING_CATEGORY_NODE1(async_hooks),                                  \
-        #PROVIDER "_CALLBACK", static_cast<int64_t>(get_async_id()));         \
-      break;
+#define V(PROVIDER)                                                            \
+  case PROVIDER_##PROVIDER:                                                    \
+    TRACE_EVENT_NESTABLE_ASYNC_BEGIN0(TRACING_CATEGORY_NODE1(async_hooks),     \
+                                      #PROVIDER "_CALLBACK",                   \
+                                      static_cast<int64_t>(get_async_id()));   \
+    break;
     NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
     default:
@@ -122,34 +121,29 @@ void AsyncWrap::EmitTraceEventBefore() {
   }
 }
 
-
 void AsyncWrap::EmitBefore(Environment* env, double async_id) {
-  Emit(env, async_id, AsyncHooks::kBefore,
-       env->async_hooks_before_function());
+  Emit(env, async_id, AsyncHooks::kBefore, env->async_hooks_before_function());
 }
-
 
 void AsyncWrap::EmitTraceEventAfter(ProviderType type, double async_id) {
   switch (type) {
-#define V(PROVIDER)                                                           \
-    case PROVIDER_ ## PROVIDER:                                               \
-      TRACE_EVENT_NESTABLE_ASYNC_END0(                                        \
-        TRACING_CATEGORY_NODE1(async_hooks),                                  \
-        #PROVIDER "_CALLBACK", static_cast<int64_t>(async_id));               \
-      break;
+#define V(PROVIDER)                                                            \
+  case PROVIDER_##PROVIDER:                                                    \
+    TRACE_EVENT_NESTABLE_ASYNC_END0(TRACING_CATEGORY_NODE1(async_hooks),       \
+                                    #PROVIDER "_CALLBACK",                     \
+                                    static_cast<int64_t>(async_id));           \
+    break;
     NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
     default:
       UNREACHABLE();
   }
 }
-
 
 void AsyncWrap::EmitAfter(Environment* env, double async_id) {
   // If the user's callback failed then the after() hooks will be called at the
   // end of _fatalException().
-  Emit(env, async_id, AsyncHooks::kAfter,
-       env->async_hooks_after_function());
+  Emit(env, async_id, AsyncHooks::kAfter, env->async_hooks_after_function());
 }
 
 static void SetupHooks(const FunctionCallbackInfo<Value>& args) {
@@ -209,15 +203,15 @@ void AsyncWrap::WeakCallback(const WeakCallbackInfo<DestroyParam>& info) {
   HandleScope scope(info.GetIsolate());
 
   std::unique_ptr<DestroyParam> p{info.GetParameter()};
-  Local<Object> prop_bag = PersistentToLocal::Default(info.GetIsolate(),
-                                                      p->propBag);
+  Local<Object> prop_bag =
+      PersistentToLocal::Default(info.GetIsolate(), p->propBag);
   Local<Value> val;
 
   p->env->RemoveCleanupHook(DestroyParamCleanupHook, p.get());
 
   if (!prop_bag.IsEmpty() &&
       !prop_bag->Get(p->env->context(), p->env->destroyed_string())
-        .ToLocal(&val)) {
+           .ToLocal(&val)) {
     return;
   }
 
@@ -226,7 +220,6 @@ void AsyncWrap::WeakCallback(const WeakCallbackInfo<DestroyParam>& info) {
   }
   // unique_ptr goes out of scope here and pointer is deleted.
 }
-
 
 static void RegisterDestroyHook(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsObject());
@@ -252,7 +245,6 @@ void AsyncWrap::GetAsyncId(const FunctionCallbackInfo<Value>& args) {
   args.GetReturnValue().Set(wrap->get_async_id());
 }
 
-
 void AsyncWrap::PushAsyncContext(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   // No need for CHECK(IsNumber()) on args because if FromJust() doesn't fail
@@ -262,13 +254,11 @@ void AsyncWrap::PushAsyncContext(const FunctionCallbackInfo<Value>& args) {
   env->async_hooks()->push_async_context(async_id, trigger_async_id, {});
 }
 
-
 void AsyncWrap::PopAsyncContext(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   double async_id = args[0]->NumberValue(env->context()).FromJust();
   args.GetReturnValue().Set(env->async_hooks()->pop_async_context(async_id));
 }
-
 
 void AsyncWrap::ExecutionAsyncResource(
     const FunctionCallbackInfo<Value>& args) {
@@ -279,12 +269,10 @@ void AsyncWrap::ExecutionAsyncResource(
       env->async_hooks()->native_execution_async_resource(index));
 }
 
-
 void AsyncWrap::ClearAsyncIdStack(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   env->async_hooks()->clear_async_id_stack();
 }
-
 
 void AsyncWrap::AsyncReset(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsObject());
@@ -298,14 +286,12 @@ void AsyncWrap::AsyncReset(const FunctionCallbackInfo<Value>& args) {
   wrap->AsyncReset(resource, execution_async_id);
 }
 
-
 void AsyncWrap::GetProviderType(const FunctionCallbackInfo<Value>& args) {
   AsyncWrap* wrap;
   args.GetReturnValue().Set(AsyncWrap::PROVIDER_NONE);
   ASSIGN_OR_RETURN_UNWRAP(&wrap, args.Holder());
   args.GetReturnValue().Set(wrap->provider_type());
 }
-
 
 void AsyncWrap::EmitDestroy(bool from_gc) {
   AsyncWrap::EmitDestroy(env(), async_id_);
@@ -320,9 +306,8 @@ void AsyncWrap::EmitDestroy(bool from_gc) {
 
 void AsyncWrap::QueueDestroyAsyncId(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsNumber());
-  AsyncWrap::EmitDestroy(
-      Environment::GetCurrent(args),
-      args[0].As<Number>()->Value());
+  AsyncWrap::EmitDestroy(Environment::GetCurrent(args),
+                         args[0].As<Number>()->Value());
 }
 
 void AsyncWrap::SetCallbackTrampoline(const FunctionCallbackInfo<Value>& args) {
@@ -379,19 +364,20 @@ void AsyncWrap::CreatePerContextProperties(Local<Object> target,
   PropertyAttribute ReadOnlyDontDelete =
       static_cast<PropertyAttribute>(ReadOnly | DontDelete);
 
-#define FORCE_SET_TARGET_FIELD(obj, str, field)                               \
-  (obj)->DefineOwnProperty(context,                                           \
-                           FIXED_ONE_BYTE_STRING(isolate, str),               \
-                           field,                                             \
-                           ReadOnlyDontDelete).FromJust()
+#define FORCE_SET_TARGET_FIELD(obj, str, field)                                \
+  (obj)                                                                        \
+      ->DefineOwnProperty(context,                                             \
+                          FIXED_ONE_BYTE_STRING(isolate, str),                 \
+                          field,                                               \
+                          ReadOnlyDontDelete)                                  \
+      .FromJust()
 
   // Attach the uint32_t[] where each slot contains the count of the number of
   // callbacks waiting to be called on a particular event. It can then be
   // incremented/decremented from JS quickly to communicate to C++ if there are
   // any callbacks waiting to be called.
-  FORCE_SET_TARGET_FIELD(target,
-                         "async_hook_fields",
-                         env->async_hooks()->fields().GetJSArray());
+  FORCE_SET_TARGET_FIELD(
+      target, "async_hook_fields", env->async_hooks()->fields().GetJSArray());
 
   // The following v8::Float64Array has 5 fields. These fields are shared in
   // this way to allow JS and C++ to read/write each value as quickly as
@@ -411,13 +397,15 @@ void AsyncWrap::CreatePerContextProperties(Local<Object> target,
                          "execution_async_resources",
                          env->async_hooks()->js_execution_async_resources());
 
-  target->Set(context,
-              env->async_ids_stack_string(),
-              env->async_hooks()->async_ids_stack().GetJSArray()).Check();
+  target
+      ->Set(context,
+            env->async_ids_stack_string(),
+            env->async_hooks()->async_ids_stack().GetJSArray())
+      .Check();
 
   Local<Object> constants = Object::New(isolate);
-#define SET_HOOKS_CONSTANT(name)                                              \
-  FORCE_SET_TARGET_FIELD(                                                     \
+#define SET_HOOKS_CONSTANT(name)                                               \
+  FORCE_SET_TARGET_FIELD(                                                      \
       constants, #name, Integer::New(isolate, AsyncHooks::name))
 
   SET_HOOKS_CONSTANT(kInit);
@@ -437,9 +425,9 @@ void AsyncWrap::CreatePerContextProperties(Local<Object> target,
   FORCE_SET_TARGET_FIELD(target, "constants", constants);
 
   Local<Object> async_providers = Object::New(isolate);
-#define V(p)                                                                  \
-  FORCE_SET_TARGET_FIELD(                                                     \
-      async_providers, #p, Integer::New(isolate, AsyncWrap::PROVIDER_ ## p));
+#define V(p)                                                                   \
+  FORCE_SET_TARGET_FIELD(                                                      \
+      async_providers, #p, Integer::New(isolate, AsyncWrap::PROVIDER_##p));
   NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
   FORCE_SET_TARGET_FIELD(target, "Providers", async_providers);
@@ -501,8 +489,7 @@ AsyncWrap::AsyncWrap(Environment* env,
 }
 
 AsyncWrap::AsyncWrap(Environment* env, Local<Object> object)
-  : BaseObject(env, object) {
-}
+    : BaseObject(env, object) {}
 
 // This method is necessary to work around one specific problem:
 // Before the init() hook runs, if there is one, the BaseObject() constructor
@@ -536,14 +523,14 @@ AsyncWrap::~AsyncWrap() {
 
 void AsyncWrap::EmitTraceEventDestroy() {
   switch (provider_type()) {
-  #define V(PROVIDER)                                                         \
-    case PROVIDER_ ## PROVIDER:                                               \
-      TRACE_EVENT_NESTABLE_ASYNC_END0(                                        \
-        TRACING_CATEGORY_NODE1(async_hooks),                                  \
-        #PROVIDER, static_cast<int64_t>(get_async_id()));                     \
-      break;
+#define V(PROVIDER)                                                            \
+  case PROVIDER_##PROVIDER:                                                    \
+    TRACE_EVENT_NESTABLE_ASYNC_END0(TRACING_CATEGORY_NODE1(async_hooks),       \
+                                    #PROVIDER,                                 \
+                                    static_cast<int64_t>(get_async_id()));     \
+    break;
     NODE_ASYNC_PROVIDER_TYPES(V)
-  #undef V
+#undef V
     default:
       UNREACHABLE();
   }
@@ -565,11 +552,12 @@ void AsyncWrap::EmitDestroy(Environment* env, double async_id) {
   if (env->destroy_async_id_list()->size() == 16384) {
     env->RequestInterrupt([](Environment* env) {
       env->context()->GetMicrotaskQueue()->EnqueueMicrotask(
-        env->isolate(),
-        [](void* arg) {
-          DestroyAsyncIdsCallback(static_cast<Environment*>(arg));
-        }, env);
-      });
+          env->isolate(),
+          [](void* arg) {
+            DestroyAsyncIdsCallback(static_cast<Environment*>(arg));
+          },
+          env);
+    });
   }
 
   env->destroy_async_id_list()->push_back(async_id);
@@ -578,7 +566,8 @@ void AsyncWrap::EmitDestroy(Environment* env, double async_id) {
 // Generalized call for both the constructor and for handles that are pooled
 // and reused over their lifetime. This way a new uid can be assigned when
 // the resource is pulled out of the pool and put back into use.
-void AsyncWrap::AsyncReset(Local<Object> resource, double execution_async_id,
+void AsyncWrap::AsyncReset(Local<Object> resource,
+                           double execution_async_id,
                            bool silent) {
   CHECK_NE(provider_type(), PROVIDER_NONE);
 
@@ -591,7 +580,7 @@ void AsyncWrap::AsyncReset(Local<Object> resource, double execution_async_id,
 
   // Now we can assign a new async_id_ to this instance.
   async_id_ = execution_async_id == kInvalidAsyncId ? env()->new_async_id()
-                                                     : execution_async_id;
+                                                    : execution_async_id;
   trigger_async_id_ = env()->get_default_trigger_async_id();
 
   {
@@ -604,21 +593,22 @@ void AsyncWrap::AsyncReset(Local<Object> resource, double execution_async_id,
   }
 
   switch (provider_type()) {
-#define V(PROVIDER)                                                           \
-    case PROVIDER_ ## PROVIDER:                                               \
-      if (*TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED(                        \
-          TRACING_CATEGORY_NODE1(async_hooks))) {                             \
-        auto data = tracing::TracedValue::Create();                           \
-        data->SetInteger("executionAsyncId",                                  \
-                         static_cast<int64_t>(env()->execution_async_id()));  \
-        data->SetInteger("triggerAsyncId",                                    \
-                         static_cast<int64_t>(get_trigger_async_id()));       \
-        TRACE_EVENT_NESTABLE_ASYNC_BEGIN1(                                    \
-          TRACING_CATEGORY_NODE1(async_hooks),                                \
-          #PROVIDER, static_cast<int64_t>(get_async_id()),                    \
-          "data", std::move(data));                                           \
-        }                                                                     \
-      break;
+#define V(PROVIDER)                                                            \
+  case PROVIDER_##PROVIDER:                                                    \
+    if (*TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED(                           \
+            TRACING_CATEGORY_NODE1(async_hooks))) {                            \
+      auto data = tracing::TracedValue::Create();                              \
+      data->SetInteger("executionAsyncId",                                     \
+                       static_cast<int64_t>(env()->execution_async_id()));     \
+      data->SetInteger("triggerAsyncId",                                       \
+                       static_cast<int64_t>(get_trigger_async_id()));          \
+      TRACE_EVENT_NESTABLE_ASYNC_BEGIN1(TRACING_CATEGORY_NODE1(async_hooks),   \
+                                        #PROVIDER,                             \
+                                        static_cast<int64_t>(get_async_id()),  \
+                                        "data",                                \
+                                        std::move(data));                      \
+    }                                                                          \
+    break;
     NODE_ASYNC_PROVIDER_TYPES(V)
 #undef V
     default:
@@ -627,9 +617,11 @@ void AsyncWrap::AsyncReset(Local<Object> resource, double execution_async_id,
 
   if (silent) return;
 
-  EmitAsyncInit(env(), resource,
+  EmitAsyncInit(env(),
+                resource,
                 env()->async_hooks()->provider_string(provider_type()),
-                async_id_, trigger_async_id_);
+                async_id_,
+                trigger_async_id_);
 }
 
 void AsyncWrap::EmitAsyncInit(Environment* env,
@@ -650,16 +642,15 @@ void AsyncWrap::EmitAsyncInit(Environment* env,
   Local<Function> init_fn = env->async_hooks_init_function();
 
   Local<Value> argv[] = {
-    Number::New(env->isolate(), async_id),
-    type,
-    Number::New(env->isolate(), trigger_async_id),
-    object,
+      Number::New(env->isolate(), async_id),
+      type,
+      Number::New(env->isolate(), trigger_async_id),
+      object,
   };
 
   TryCatchScope try_catch(env, TryCatchScope::CatchMode::kFatal);
   USE(init_fn->Call(env->context(), object, arraysize(argv), argv));
 }
-
 
 MaybeLocal<Value> AsyncWrap::MakeCallback(const Local<Function> cb,
                                           int argc,
@@ -667,9 +658,9 @@ MaybeLocal<Value> AsyncWrap::MakeCallback(const Local<Function> cb,
   EmitTraceEventBefore();
 
   ProviderType provider = provider_type();
-  async_context context { get_async_id(), get_trigger_async_id() };
-  MaybeLocal<Value> ret = InternalMakeCallback(
-      env(), object(), object(), cb, argc, argv, context);
+  async_context context{get_async_id(), get_trigger_async_id()};
+  MaybeLocal<Value> ret =
+      InternalMakeCallback(env(), object(), object(), cb, argc, argv, context);
 
   // This is a static call with cached values because the `this` object may
   // no longer be alive at this point.
@@ -704,8 +695,7 @@ Local<Object> AsyncWrap::GetOwner(Environment* env, Local<Object> obj) {
   TryCatchScope ignore_exceptions(env);
   while (true) {
     Local<Value> owner;
-    if (!obj->Get(env->context(),
-                  env->owner_symbol()).ToLocal(&owner) ||
+    if (!obj->Get(env->context(), env->owner_symbol()).ToLocal(&owner) ||
         !owner->IsObject()) {
       return handle_scope.Escape(obj);
     }
