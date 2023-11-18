@@ -108,8 +108,11 @@ void AsyncHooks::push_async_context(double async_id,
     CHECK_GE(trigger_async_id, -1);
   }
 
-  printf("push_async_context(%f, %f)\n", async_id, kStackLength);
   uint32_t offset = fields_[kStackLength];
+  printf("push_async_context async_id:%f, kStackLength:%f, offset:%f\n",
+         async_id,
+         kStackLength,
+         offset);
   if (offset * 2 >= async_ids_stack_.Length()) grow_async_ids_stack();
   async_ids_stack_[2 * offset] = async_id_fields_[kExecutionAsyncId];
   async_ids_stack_[2 * offset + 1] = async_id_fields_[kTriggerAsyncId];
@@ -126,7 +129,9 @@ void AsyncHooks::push_async_context(double async_id,
   // `resource` will be empty, because JS caches these values anyway.
   if (!resource.IsEmpty()) {
     native_execution_async_resources_.resize(offset + 1);
+    printf("native_execution_async_resources_ offset:%f\n", offset);
     // Caveat: This is a v8::Local<> assignment, we do not keep a v8::Global<>!
+    // mark 如何通过 v8 打印 resource 值
     native_execution_async_resources_[offset] = resource;
   }
 }

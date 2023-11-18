@@ -1,6 +1,6 @@
-#include "node.h"
 #include "async_wrap-inl.h"
 #include "env-inl.h"
+#include "node.h"
 #include "v8.h"
 
 namespace node {
@@ -19,40 +19,37 @@ using v8::Value;
 CallbackScope::CallbackScope(Isolate* isolate,
                              Local<Object> object,
                              async_context async_context)
-  : CallbackScope(Environment::GetCurrent(isolate), object, async_context) {}
+    : CallbackScope(Environment::GetCurrent(isolate), object, async_context) {}
 
 CallbackScope::CallbackScope(Environment* env,
                              Local<Object> object,
                              async_context asyncContext)
-  : private_(new InternalCallbackScope(env,
-                                       object,
-                                       asyncContext)),
-    try_catch_(env->isolate()) {
+    : private_(new InternalCallbackScope(env, object, asyncContext)),
+      try_catch_(env->isolate()) {
   try_catch_.SetVerbose(true);
 }
 
 CallbackScope::~CallbackScope() {
-  if (try_catch_.HasCaught())
-    private_->MarkAsFailed();
+  if (try_catch_.HasCaught()) private_->MarkAsFailed();
   delete private_;
 }
 
 InternalCallbackScope::InternalCallbackScope(AsyncWrap* async_wrap, int flags)
-    : InternalCallbackScope(async_wrap->env(),
-                            async_wrap->object(),
-                            { async_wrap->get_async_id(),
-                              async_wrap->get_trigger_async_id() },
-                            flags) {}
+    : InternalCallbackScope(
+          async_wrap->env(),
+          async_wrap->object(),
+          {async_wrap->get_async_id(), async_wrap->get_trigger_async_id()},
+          flags) {}
 
 InternalCallbackScope::InternalCallbackScope(Environment* env,
                                              Local<Object> object,
                                              const async_context& asyncContext,
                                              int flags)
-  : env_(env),
-    async_context_(asyncContext),
-    object_(object),
-    skip_hooks_(flags & kSkipAsyncHooks),
-    skip_task_queues_(flags & kSkipTaskQueues) {
+    : env_(env),
+      async_context_(asyncContext),
+      object_(object),
+      skip_hooks_(flags & kSkipAsyncHooks),
+      skip_task_queues_(flags & kSkipTaskQueues) {
   CHECK_NOT_NULL(env);
   env->PushAsyncCallbackScope();
 
@@ -77,7 +74,7 @@ InternalCallbackScope::InternalCallbackScope(Environment* env,
   isolate->SetIdle(false);
 
   env->async_hooks()->push_async_context(
-    async_context_.async_id, async_context_.trigger_async_id, object);
+      async_context_.async_id, async_context_.trigger_async_id, object);
 
   pushed_ids_ = true;
 
@@ -176,8 +173,7 @@ MaybeLocal<Value> InternalMakeCallback(Environment* env,
                                        async_context asyncContext) {
   CHECK(!recv.IsEmpty());
 #ifdef DEBUG
-  for (int i = 0; i < argc; i++)
-    CHECK(!argv[i].IsEmpty());
+  for (int i = 0; i < argc; i++) CHECK(!argv[i].IsEmpty());
 #endif
 
   Local<Function> hook_cb = env->async_hooks_callback_trampoline();
@@ -188,10 +184,13 @@ MaybeLocal<Value> InternalMakeCallback(Environment* env,
     // Use the callback trampoline if there are any before or after hooks, or
     // we can expect some kind of usage of async_hooks.executionAsyncResource().
     flags = InternalCallbackScope::kSkipAsyncHooks;
+    // 计算 kBefore+kAfter+kUsesExecutionAsyncResource 是否大于 0
+    // 如果大于 0，
     use_async_hooks_trampoline =
         async_hooks->fields()[AsyncHooks::kBefore] +
-        async_hooks->fields()[AsyncHooks::kAfter] +
-        async_hooks->fields()[AsyncHooks::kUsesExecutionAsyncResource] > 0;
+            async_hooks->fields()[AsyncHooks::kAfter] +
+            async_hooks->fields()[AsyncHooks::kUsesExecutionAsyncResource] >
+        0;
   }
 
   InternalCallbackScope scope(env, resource, asyncContext, flags);
@@ -316,9 +315,13 @@ MaybeLocal<Value> MakeSyncCallback(Isolate* isolate,
 
   // This is a toplevel invocation and the caller (intentionally)
   // didn't provide any async_context to run in. Install a default context.
-  MaybeLocal<Value> ret =
-    InternalMakeCallback(env, env->process_object(), recv, callback, argc, argv,
-                         async_context{0, 0});
+  MaybeLocal<Value> ret = InternalMakeCallback(env,
+                                               env->process_object(),
+                                               recv,
+                                               callback,
+                                               argc,
+                                               argv,
+                                               async_context{0, 0});
   return ret;
 }
 
