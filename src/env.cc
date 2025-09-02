@@ -342,7 +342,7 @@ IsolateDataSerializeInfo IsolateData::Serialize(SnapshotCreator* creator) {
     Local<TypeName> field = PropertyName();                                    \
     if (!field.IsEmpty()) {                                                    \
       size_t index = creator->AddData(field);                                  \
-      info.template_values.push_back({#PropertyName, id, index});              \
+      info.template_values.push_back({ #PropertyName, id, index });            \
     }                                                                          \
     id++;                                                                      \
   } while (0);
@@ -1404,10 +1404,13 @@ void Environment::ToggleImmediateRef(bool ref) {
   }
 }
 
+// 获取 libuv 启动到现在的时间
 uint64_t Environment::GetNowUint64() {
   uv_update_time(event_loop());
   uint64_t now = uv_now(event_loop());
+  // timer_base 指的是 libuv 启动时间
   CHECK_GE(now, timer_base());
+  // now 是现在时间
   now -= timer_base();
   return now;
 }

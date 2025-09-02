@@ -4,12 +4,13 @@
 // }, 100);
 
 
-debugger
-let intervalTimer = setInterval(function () {
+setTimeout(() => {
+  debugger
+  setTimeout(() => {
 
-}, 450)
-debugger
-clearInterval(intervalTimer)
+  })
+}, 5000)
+
 // clearTimeout(timers)
 
 // setTimeout(() => {
