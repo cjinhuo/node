@@ -1,0 +1,86 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug C++ index.js",
+      "type": "cppdbg",
+      "program": "${workspaceFolder}/out/Debug/Node",
+      "request": "launch",
+      "args": [
+        "--inspect-brk",
+        "${workspaceFolder}/debug/test.js"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb"
+    },
+    {
+      "name": "Debug C++ async_hook.js",
+      "type": "cppdbg",
+      "program": "${workspaceFolder}/out/Debug/Node",
+      "request": "launch",
+      "args": [
+        "--inspect-brk",
+        "${workspaceFolder}/demo/async_hook.js"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb"
+    },
+    {
+      "name": "Debug Node",
+      "type": "node",
+      "runtimeExecutable": "${workspaceFolder}/out/Debug/Node",
+      "request": "launch",
+      "args": [
+        "--expose-internals",
+        "--nolazy"
+      ],
+      "skipFiles": [],
+      "program": "${workspaceFolder}/demo/index.js"
+    },
+    {
+      "name": "Debug net async",
+      "type": "node",
+      "runtimeExecutable": "${workspaceFolder}/out/Debug/Node",
+      "request": "launch",
+      "args": [
+        "--expose-internals",
+        "--nolazy"
+      ],
+      "skipFiles": [],
+      "program": "${workspaceFolder}/bpost_demos/net_async.js"
+    },
+    {
+      "name": "Debug C++ with set_await.js",
+      "type": "cppdbg",
+      "program": "${workspaceFolder}/out/Debug/Node",
+      "request": "launch",
+      "args": [
+        "--inspect-brk",
+        "${workspaceFolder}/bpost_demos/set_await.js"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb"
+    },
+    // {
+    //   "name": "Debug async_hook",
+    //   "type": "node",
+    //   "runtimeExecutable": "${workspaceFolder}/out/Debug/Node",
+    //   "request": "launch",
+    //   "args": [
+    //     "--expose-internals",
+    //     "--nolazy"
+    //   ],
+    //   "skipFiles": [],
+    //   "program": "${workspaceFolder}/demo/async_hook.js"
+    // }
+  ]
+}
